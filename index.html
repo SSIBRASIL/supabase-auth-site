@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Supabase Corrigido</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h2>Entrar ou Criar Conta</h2>
+  <input type="text" id="nome" placeholder="Nome completo"><br>
+  <input type="tel" id="telefone" placeholder="Telefone"><br>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="senha" placeholder="Senha"><br>
+  <button onclick="registrar()">Criar Conta</button>
+  <button onclick="login()">Entrar</button>
+  <button onclick="logout()">Sair</button>
+  <button onclick="excluirConta()">Excluir Conta</button>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://motqggvxplegckxuvujc.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdHFnZ3Z4cGxlZ2NreHV2dWpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzOTY4MjMsImV4cCI6MjA2NTk3MjgyM30.C1DLQis5upgmaPeTXgt-rMztlTeAm5ODKjVC_XhC4-o'
+    );
+
+    async function registrar() {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+      const nome = document.getElementById("nome").value;
+      const telefone = document.getElementById("telefone").value;
+
+      const { data, error } = await supabase.auth.signUp({ email, password: senha });
+
+      if (error) return alert("Erro: " + error.message);
+
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase.from("profiles").insert([{ id: userId, nome, telefone }]);
+        alert("Conta criada! Confirme o e-mail.");
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+      if (error || !data.session) return alert("Erro: " + (error?.message || "Sessão inválida"));
+
+      if (!data.session.user.email_confirmed_at) {
+        alert("Confirme seu e-mail antes de entrar.");
+        return;
+      }
+
+      window.location.href = "home.html";
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      alert("Sessão encerrada.");
+    }
+
+    async function excluirConta() {
+      const { error } = await supabase.rpc("delete_user");
+      if (error) return alert("Erro: " + error.message);
+      alert("Conta excluída.");
+      location.reload();
+    }
+  </script>
+</body>
+</html>
